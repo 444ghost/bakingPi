@@ -1,16 +1,21 @@
-.section .data
-welcome_msg: .asciz "Welcome to my RPi"
+//.section .data
+//.balign 4 // 4 bytes
+//.byte 1 // array of 1
+//.AUX_IRQ: .word 0x3f215000 // interrupt status
 .section .text
-.globl	_start
-_start:
-	mrs	x0, mpidr_el1
-	mov	x1, #0xC0000000
-	bic	x0, x0, x1
-	cbz	x0, main
-	b	hang
-hang:
-	b	hang
+.globl main
 main:
+	mrs	x0, mpidr_el1
+	mov	x1, #0xc1000000
+	bic	x0, x0, x1
+	cbz	x0, .go
+.go:
+	mov	w3, 1001
+.delay2:
+	sub	w3, w3, 1
+	cmp	w3, 0
+	bne	.delay2
+	mov	x0, x30
 	ldr     x0, =0x3f200004 // GPIO 14 and 15 as alternate fun Tx and Rx
         ldr     w1, #0
         orr     w1, w1, 8192
@@ -26,24 +31,23 @@ main:
 	mov	w1, 3
 	str	w1, [x0]	// ;
         ldr     x0, =0x3f215048 // enable FIFO and FIFO clear bits on Tx
-        mov     w1, 0xc6
+        mov     w1, 0xc4
         str     w1, [x0]        // ;
         ldr	x0, =0x3f215060 // enable uart Tx and Rx
         mov	w1, 3
         str	w1, [x0]	// ;
-	mov	w0, 20544	// load AUX_MU_IO_REG register
-	movk	w0, 0x3f21, lsl 16
-.rxEmpty:	
-	mov	w5, 20564
-	movk	w5, 0x3f21, lsl 16 // load AUX_MU_LSF_REG line status
-	ldr	w5, [x5]
-	nop
-	and	w5, w5, 1
-	cmp	w5, 0
-	bne	.here
-	b	.rxEmpty
-.here:
-	mov	w1, 0x78
-	str	w1, [x0]
-	nop
-	ret
+	mov	w1, 79		// transmit 'H'
+        mov	w0, 20544
+        movk	w0, 0x3f21, lsl 16
+	str	w1, [x0]	// ;
+	mov	w3, 1001
+.delay:
+	sub	w3, w3, 1
+	cmp	w3, 0
+	bne	.delay
+        mov     w1, 80          // transmit 'I'
+        mov     w0, 20544
+        movk    w0, 0x3f21, lsl 16
+        str	w1, [x0]	// ;
+.hang:
+	b	.hang

@@ -50,7 +50,8 @@ $(TARGET) : $(BUILD)output.elf
 # Rule to make the elf file.
 #$(ARMGNU)-ld --no-undefined $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER)
 $(BUILD)output.elf : $(OBJECTS) $(LINKER)
-	$(ARMGNU)-ld $(OBJECTS) -o $(BUILD)output.elf -T memmap
+	$(ARMGNU)-as vectors.s -o vectors.o
+	$(ARMGNU)-ld $(OBJECTS) vectors.o -o $(BUILD)output.elf -T memmap
 
 # Rule to make the object files.
 $(BUILD)%.o: $(SOURCE)%.s $(BUILD)

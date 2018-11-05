@@ -33,17 +33,19 @@ main:
         str	w1, [x0]	// ;
 	mov	w0, 20544	// load AUX_MU_IO_REG register
 	movk	w0, 0x3f21, lsl 16
-.rxEmpty:	
-	mov	w5, 20564
-	movk	w5, 0x3f21, lsl 16 // load AUX_MU_LSF_REG line status
-	ldr	w5, [x5]
-	nop
-	and	w5, w5, 1
-	cmp	w5, 0
-	bne	.here
-	b	.rxEmpty
-.here:
-	mov	w1, 0x78
-	str	w1, [x0]
-	nop
+	adr	x2, welcome_msg // allocate addresses to the label
+	mov	w4, 18		// the number of characters in the label
+	ldr	x5, =0x3f215054 // load AUX_MU_LSR_REG register, line status
+.loop:
+.txNotEmpty:
+	ldr	w6, [x5]
+	and	w6, w6, 0x20 	// is Tx FIFO available for at least one byte?
+	cmp	w6, 0x20	
+	bne	.txNotEmpty	// ;
+        ldrb    w1, [x2], #1	// write one byte to AUX_MU_IO_REG 
+				// and increment label address by one
+        str     w1, [x0]	// ;
+	sub	w4, w4, 1
+	cmp	w4, 0
+	bne	.loop
 	ret
